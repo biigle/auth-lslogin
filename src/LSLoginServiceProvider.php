@@ -18,24 +18,25 @@ class LSLoginServiceProvider extends ServiceProvider
    */
     public function boot(Modules $modules, Router $router)
     {
-        // $this->loadViewsFrom(__DIR__.'/resources/views', 'auth-lslogin');
+        $this->loadViewsFrom(__DIR__.'/resources/views', 'auth-lslogin');
 
-        // $router->group([
-        //     'namespace' => 'Biigle\Modules\Module\Http\Controllers',
-        //     'middleware' => 'web',
-        // ], function ($router) {
-        //     require __DIR__.'/Http/routes.php';
-        // });
+        $router->group([
+            'namespace' => 'Biigle\Modules\AuthLSLogin\Http\Controllers',
+            'middleware' => 'web',
+        ], function ($router) {
+            require __DIR__.'/Http/routes.php';
+        });
 
-        // $modules->register('module', [
-        //     'viewMixins' => [
-        //         'dashboardMain',
-        //     ],
-        // ]);
+        $modules->register('auth-lslogin', [
+            'viewMixins' => [
+                'loginButton',
+                'registerButton',
+            ],
+        ]);
 
-        // $this->publishes([
-        //     __DIR__.'/public/assets' => public_path('vendor/auth-lslogin'),
-        // ], 'public');
+        $this->publishes([
+            __DIR__.'/public/assets' => public_path('vendor/auth-lslogin'),
+        ], 'public');
     }
 
     /**

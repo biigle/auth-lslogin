@@ -1,12 +1,11 @@
 <?php
 
-// $router->get('quotes', [
-//    'middleware' => 'auth',
-//    'as'   => 'quotes',
-//    'uses' => 'QuotesController@index',
-// ]);
+$router->get('auth/lslogin/redirect', [
+   'as'   => 'lslogin-redirect',
+   'uses' => 'LSLoginController@redirect',
+]);
 
-// $router->get('quotes/new', [
-//    'middleware' => 'auth',
-//    'uses' => 'QuotesController@quote',
-// ]);
+$router->get('auth/lslogin/callback', [
+   'as'   => 'lslogin-callback',
+   'uses' => 'LSLoginController@callback',
+]);
