@@ -1,40 +1,38 @@
-# BIIGLE Module Template
+# BIIGLE Life Science Login Module
 
-[![Test status](https://github.com/biigle/module/workflows/Tests/badge.svg)](https://github.com/biigle/module/actions?query=workflow%3ATests)
+[![Test status](https://github.com/biigle/auth-lslogin/workflows/Tests/badge.svg)](https://github.com/biigle/auth-lslogin/actions?query=workflow%3ATests)
 
-This is a template that can be used for the development of new BIIGLE modules.
+This is a BIIGLE module that provides authentication via [Life Science Login](https://lifescience-ri.eu/ls-login/).
 
-## How to develop BIIGLE modules
+Information on how to register your BIIGLE instance as a new relying party to Life Science Login can be found [here](https://lifescience-ri.eu/ls-login/relying-parties/how-to-register-and-integrate-a-relying-party-to-ls-login.html). In the [application form](https://webapp.aai.lifescience-ri.eu/sp_request), enter the following technical information:
 
-The BIIGLE manual contains [some tutorials](https://biigle-admin-documentation.readthedocs.io/module-development/module-development/) that can get you started with BIIGLE module development. This repository implements the code that is covered in the first three tutorials.
+- **SAML2 or OIDC**: OIDC
+- **Supported grants**:
+   - Authorization Code Flow
+   - Refresh Token
+- **Client is public**: No (leave unchecked)
+- **Require PKCE**: Yes (check box)
+- **Redirect URLs**: `https://example.com/auth/lslogin/callback` (replace `example.com` with your actual domain)
 
-## How to use this template
+## Installation
 
-First, [create a new repository](https://github.com/biigle/module/generate) based on this template. Then update the name of this module from `biigle/module` to whatever name you want to use for your module. The name has to be updated at the following locations:
+1. Run `composer require biigle/auth-lslogin --prefer-source`.
+2. Run `php artisan vendor:publish --tag=public` to refresh the public assets of the modules. Do this for every update of this module.
+3. Configure your Life Science Login credentials in `config/services.php` like this:
+   ```php
+   'lifesciencelogin' => [
+       'client_id' => env('LSLOGIN_CLIENT_ID'),
+       'client_secret' => env('LSLOGIN_CLIENT_SECRET'),
+       'redirect' => '/auth/lslogin/callback',
+   ],
+   ```
 
-1. [`QuotesController.php`](src/Http/Controllers/QuotesController.php#L16)
-2. [`index.blade.php#L13`](src/resources/views/index.blade.php#L13)
-3. [`index.blade.php#L16`](src/resources/views/index.blade.php#L16)
-4. [`ModuleServiceProvider.php#L21`](src/ModuleServiceProvider.php#L21)
-5. [`ModuleServiceProvider.php#L30`](src/ModuleServiceProvider.php#L30)
-6. [`ModuleServiceProvider.php#L43`](src/ModuleServiceProvider.php#L43)
-7. [`composer.json#L2`](composer.json#L2)
-8. [`test.yml#L15`](.github/workflows/test.yml#L15)
+## Developing
 
-Next, update the namespace of all PHP classes (`Biigle\Modules\Module`) and replace `Module` with the name of your module. Do this in [`webpack.mix.js#L23`](webpack.mix.js#L23), too. Now you can install the module and start developing.
+Take a look at the [development guide](https://github.com/biigle/core/blob/master/DEVELOPING.md) of the core repository to get started with the development setup.
 
-In addition to the code of the [tutorials](https://biigle.de/manual#developer-tutorials) this repository already contains the configuration for [Laravel Mix](https://laravel.com/docs/9.x/mix) as build system. To install the build system, run and then run `npm install`. Now you can use the following commands:
+Want to develop a new module? Head over to the [biigle/module](https://github.com/biigle/module) template repository.
 
-- `npm run dev`: Builds and publishes the assets once.
-- `npm run prod`: Builds, minifies and publishes the assets once. Always do this before you commit new code.
-- `npm run watch`: Continuously builds and publishes the assets whenever an asset file is changed.
-- `npm run lint`: Run static analysis to check for errors.
+## Contributions and bug reports
 
-## How wo install this module
-
-Note that you have to replace `biigle/module` with the actual name of your module/repository.
-
-1. Run `composer require biigle/module --prefer-source`. This requires your module to be published on [Packagist](https://packagist.org/). If you don't want to publish your package, read more on [alternative options](https://getcomposer.org/doc/05-repositories.md#vcs).
-2. Add `Biigle\Modules\Module\ModuleServiceProvider::class` to the `providers` array in `config/app.php`. Replace `Module` in the class namespace with the name of your module.
-3. Run `php artisan vendor:publish --tag=public` to refresh the public assets of the modules. Do this for every update of this module.
-
+Contributions to BIIGLE are always welcome. Check out the [contribution guide](https://github.com/biigle/core/blob/master/CONTRIBUTING.md) to get started.
