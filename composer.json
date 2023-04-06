@@ -14,9 +14,6 @@
          "email": "martin@cebitec.uni-bielefeld.de"
       }
     ],
-    "require": {
-        "socialiteproviders/lifesciencelogin": "^1.0"
-    },
     "autoload": {
       "psr-4": {
          "Biigle\\Modules\\AuthLSLogin\\": "src"
