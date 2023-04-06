@@ -18,5 +18,12 @@
       "psr-4": {
          "Biigle\\Modules\\AuthLSLogin\\": "src"
       }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Biigle\\Modules\\AuthLSLogin\\LSLoginServiceProvider"
+            ]
+        }
     }
 }
