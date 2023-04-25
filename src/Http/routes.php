@@ -9,3 +9,8 @@ $router->get('auth/lslogin/callback', [
    'as'   => 'lslogin-callback',
    'uses' => 'LSLoginController@callback',
 ]);
+
+$router->get('auth/lslogin/register', [
+   'as'   => 'lslogin-register-form',
+   'uses' => 'RegisterController@showRegistrationForm',
+]);

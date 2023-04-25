@@ -4,7 +4,10 @@ namespace Biigle\Modules\AuthLSLogin;
 
 use Biigle\Services\Modules;
 use Illuminate\Routing\Router;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
+use SocialiteProviders\Manager\SocialiteWasCalled;
+use SocialiteProviders\LifeScienceLogin\LifeScienceLoginExtendSocialite;
 
 class LSLoginServiceProvider extends ServiceProvider
 {
@@ -19,6 +22,7 @@ class LSLoginServiceProvider extends ServiceProvider
     public function boot(Modules $modules, Router $router)
     {
         $this->loadViewsFrom(__DIR__.'/resources/views', 'auth-lslogin');
+        $this->loadMigrationsFrom(__DIR__.'/Database/migrations');
 
         $router->group([
             'namespace' => 'Biigle\Modules\AuthLSLogin\Http\Controllers',
@@ -37,6 +41,11 @@ class LSLoginServiceProvider extends ServiceProvider
         $this->publishes([
             __DIR__.'/public/assets' => public_path('vendor/auth-lslogin'),
         ], 'public');
+
+        Event::listen(
+            SocialiteWasCalled::class,
+            [LifeScienceLoginExtendSocialite::class, 'handle']
+        );
     }
 
     /**
