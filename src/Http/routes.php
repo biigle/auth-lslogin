@@ -14,3 +14,8 @@ $router->get('auth/lslogin/register', [
    'as'   => 'lslogin-register-form',
    'uses' => 'RegisterController@showRegistrationForm',
 ]);
+
+$router->post('auth/lslogin/register', [
+   'as'   => 'lslogin-register',
+   'uses' => 'RegisterController@register',
+]);
