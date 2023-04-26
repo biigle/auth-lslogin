@@ -39,6 +39,7 @@ class RegisterControllerTest extends TestCase
     public function testRegisterEmailTaken()
     {
         // case insensitive
+        // suggest to connect in account settings instead
     }
 
     public function testRegisterWithoutToken()

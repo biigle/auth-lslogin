@@ -35,6 +35,7 @@ class LSLoginServiceProvider extends ServiceProvider
             'viewMixins' => [
                 'loginButton',
                 'registerButton',
+                'settingsThirdPartyAuthentication',
             ],
         ]);
 
