@@ -16,7 +16,7 @@ Information on how to register your BIIGLE instance as a new relying party to Li
 
 ## Installation
 
-1. Run `composer require biigle/auth-lslogin --prefer-source`.
+1. Run `composer require biigle/auth-lslogin`.
 2. Run `php artisan vendor:publish --tag=public` to refresh the public assets of the modules. Do this for every update of this module.
 3. Configure your Life Science Login credentials in `config/services.php` like this:
    ```php
