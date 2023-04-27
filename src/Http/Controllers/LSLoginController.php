@@ -40,7 +40,9 @@ class LSLoginController extends Controller
                     'user_id' => $request->user()->id,
                 ]);
 
-                return redirect()->route('settings-authentication');
+                return redirect()->route('settings-authentication')
+                    ->with('message', 'Your account is now connected to Life Science Login.')
+                    ->with('messageType', 'success');
 
             // Case: The authenticated user already connected their account with LSL.
             } elseif ($lslId->user_id === $request->user()->id) {

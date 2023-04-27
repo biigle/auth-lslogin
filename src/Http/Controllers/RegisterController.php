@@ -4,6 +4,7 @@ namespace Biigle\Modules\AuthLSLogin\Http\Controllers;
 
 use Biigle\Http\Controllers\Auth\RegisterController as BaseController;
 use Biigle\Modules\AuthLSLogin\LsloginId;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Str;
@@ -32,12 +33,27 @@ class RegisterController extends BaseController
      */
     public function register(Request $request)
     {
-        $token = $request->session()->get('lslogin-token');
-        if (!$token) {
-            // error
+        if ($this->isRegistrationDisabled()) {
+            abort(Response::HTTP_NOT_FOUND);
         }
 
-        $user = Socialite::driver('lifesciencelogin')->userFromToken($token);
+        $token = $request->session()->get('lslogin-token');
+        if (!$token) {
+            // Users should only arrive at the lslogin register form after completing the
+            // authentication which sets the token. The case without token should not
+            // happen but you never know...
+            return redirect()->route('register');
+        }
+
+        try {
+            $user = Socialite::driver('lifesciencelogin')->userFromToken($token);
+        } catch (Exception $e) {
+            $request->session()->forget('lslogin-token');
+
+            return redirect()
+                ->back()
+                ->withErrors(['lslogin-id' => 'Could not retrieve user details from Life Science Login. Invalid token?']);
+        }
 
         $request->merge([
             'id' => $user->id,
@@ -46,6 +62,14 @@ class RegisterController extends BaseController
             'lastname' => $user->family_name,
             'password' => Str::random(8),
         ]);
+
+        if (LsloginId::where('id', $user->id)->exists()) {
+            $request->session()->forget('lslogin-token');
+
+            return redirect()
+                ->back()
+                ->withErrors(['lslogin-id' => 'The Life Science Login ID is already connected with an account.']);
+        }
 
         return parent::register($request);
     }
@@ -62,6 +86,9 @@ class RegisterController extends BaseController
         unset($rules['homepage']);
 
         $validator->setRules($rules);
+        $validator->setCustomMessages([
+            'email.unique' => 'The email has already been taken. You can connect your existing account to Life Science Login in the account authorization settings.',
+        ]);
 
         return $validator;
     }

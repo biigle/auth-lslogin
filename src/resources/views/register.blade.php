@@ -8,7 +8,7 @@
     <div class="row center-form">
         <div class="col-md-4 col-sm-6">
             <h1 class="logo  logo--standalone"><a href="{{ route('home') }}" class="logo__biigle">BIIGLE</a></h1>
-            <form class="well clearfix" role="form" method="POST" action="{{ url('lslogin-register') }}">
+            <form class="well clearfix" role="form" method="POST" action="{{ route('lslogin-register') }}">
 
                 <p class="lead text-center">Create an account</p>
 

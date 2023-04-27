@@ -5,10 +5,12 @@ namespace Biigle\Tests\Modules\AuthLSLogin\Http\Controllers;
 use Biigle\Modules\AuthLSLogin\LsloginId;
 use Biigle\Role;
 use Biigle\User;
+use Exception;
 use Laravel\Socialite\Facades\Socialite;
 use Laravel\Socialite\Two\User as SocialiteUser;
 use Session;
 use TestCase;
+use View;
 
 class RegisterControllerTest extends TestCase
 {
@@ -70,47 +72,169 @@ class RegisterControllerTest extends TestCase
 
     public function testRegisterMissingAffiliation()
     {
-        // the token should be left in the session
+        $user = new SocialiteUser;
+        $user->map([
+            'id' => 'mylsloginid',
+            'given_name' => 'Joe',
+            'family_name' => 'User',
+            'email' => 'joe@example.com',
+        ]);
+        Socialite::shouldReceive('driver->userFromToken')
+            ->with('mytoken')
+            ->andReturn($user);
+
+        $this->withSession(['lslogin-token' => 'mytoken'])
+            ->post('auth/lslogin/register', [
+                '_token'    => Session::token(),
+            ])
+            ->assertSessionHas('lslogin-token')
+            ->assertInvalid('affiliation');
     }
 
     public function testRegisterEmailTaken()
     {
-        // case insensitive
-        // suggest to connect in account settings instead
+        User::factory()->create(['email' => 'joe@example.com']);
+        $user = new SocialiteUser;
+        $user->map([
+            'id' => 'mylsloginid',
+            'given_name' => 'Joe',
+            'family_name' => 'User',
+            'email' => 'joe@example.com',
+        ]);
+        Socialite::shouldReceive('driver->userFromToken')
+            ->with('mytoken')
+            ->andReturn($user);
+
+        $this->withSession(['lslogin-token' => 'mytoken'])
+            ->post('auth/lslogin/register', [
+                '_token'    => Session::token(),
+                'affiliation' => 'something',
+            ])
+            ->assertInvalid('email');
     }
 
     public function testRegisterIdTaken()
     {
-        // show error message
+        LsloginId::factory()->create(['id' => 'mylsloginid']);
+        $user = new SocialiteUser;
+        $user->map([
+            'id' => 'mylsloginid',
+            'given_name' => 'Joe',
+            'family_name' => 'User',
+            'email' => 'joe@example.com',
+        ]);
+        Socialite::shouldReceive('driver->userFromToken')
+            ->with('mytoken')
+            ->andReturn($user);
+
+        $this->withSession(['lslogin-token' => 'mytoken'])
+            ->post('auth/lslogin/register', [
+                '_token'    => Session::token(),
+                'affiliation' => 'something',
+            ])
+            ->assertSessionMissing('lslogin-token')
+            ->assertInvalid('lslogin-id');
     }
 
     public function testRegisterWithoutToken()
     {
-        // redirect to register route
+        $this->post('auth/lslogin/register', [
+                '_token'    => Session::token(),
+                'affiliation' => 'something',
+            ])
+            ->assertRedirectToRoute('register');
     }
 
     public function testRegisterInvalidToken()
     {
-        // show error message
+        Socialite::shouldReceive('driver->userFromToken')->andThrow(Exception::class);
+        $this->withSession(['lslogin-token' => 'mytoken'])
+            ->post('auth/lslogin/register', [
+                '_token'    => Session::token(),
+                'affiliation' => 'something',
+            ])
+            ->assertSessionMissing('lslogin-token')
+            ->assertInvalid('lslogin-id');
     }
 
     public function testRegisterPrivacy()
     {
-        //
+        View::shouldReceive('exists')->with('privacy')->andReturn(true);
+        View::shouldReceive('exists')->with('terms')->andReturn(false);
+        View::shouldReceive('share')->passthru();
+        View::shouldReceive('make')->andReturn('');
+        $user = new SocialiteUser;
+        $user->map([
+            'id' => 'mylsloginid',
+            'given_name' => 'Joe',
+            'family_name' => 'User',
+            'email' => 'joe@example.com',
+        ]);
+        Socialite::shouldReceive('driver->userFromToken')
+            ->with('mytoken')
+            ->andReturn($user);
+
+        $this->withSession(['lslogin-token' => 'mytoken'])
+            ->post('auth/lslogin/register', [
+                '_token'    => Session::token(),
+                'affiliation' => 'something',
+            ])
+            ->assertSessionHas('lslogin-token')
+            ->assertInvalid('privacy');
+
+        $this->withSession(['lslogin-token' => 'mytoken'])
+            ->post('auth/lslogin/register', [
+                '_token'    => Session::token(),
+                'affiliation' => 'something',
+                'privacy' => '1',
+            ])
+            ->assertRedirectToRoute('home');
     }
 
     public function testRegisterTerms()
     {
-        //
+        View::shouldReceive('exists')->with('privacy')->andReturn(false);
+        View::shouldReceive('exists')->with('terms')->andReturn(true);
+        View::shouldReceive('share')->passthru();
+        View::shouldReceive('make')->andReturn('');
+        $user = new SocialiteUser;
+        $user->map([
+            'id' => 'mylsloginid',
+            'given_name' => 'Joe',
+            'family_name' => 'User',
+            'email' => 'joe@example.com',
+        ]);
+        Socialite::shouldReceive('driver->userFromToken')
+            ->with('mytoken')
+            ->andReturn($user);
+
+        $this->withSession(['lslogin-token' => 'mytoken'])
+            ->post('auth/lslogin/register', [
+                '_token'    => Session::token(),
+                'affiliation' => 'something',
+            ])
+            ->assertSessionHas('lslogin-token')
+            ->assertInvalid('terms');
+
+        $this->withSession(['lslogin-token' => 'mytoken'])
+            ->post('auth/lslogin/register', [
+                '_token'    => Session::token(),
+                'affiliation' => 'something',
+                'terms' => '1',
+            ])
+            ->assertRedirectToRoute('home');
     }
 
     public function testRegisterDisabledRegistration()
     {
-        // not found?
+        config(['biigle.user_registration' => false]);
+        $this->post('auth/lslogin/register')->assertStatus(404);
     }
 
     public function testRegisterAuthenticated()
     {
-        // redirect to home
+        $user = User::factory()->create();
+        $this->be($user);
+        $this->post('auth/lslogin/register')->assertRedirectToRoute('home');
     }
 }
