@@ -14,6 +14,12 @@ use View;
 
 class RegisterControllerTest extends TestCase
 {
+    public function setUp(): void
+    {
+        parent::setUp();
+        config(['biigle.user_registration' => true]);
+    }
+
     public function testShowRegistrationForm()
     {
         $this->withSession(['lslogin-token' => 'mytoken'])
