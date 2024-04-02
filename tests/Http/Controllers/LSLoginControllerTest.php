@@ -5,10 +5,10 @@ namespace Biigle\Tests\Modules\AuthLSLogin\Http\Controllers;
 use Biigle\Modules\AuthLSLogin\LsloginId;
 use Biigle\User;
 use Laravel\Socialite\Facades\Socialite;
+use Laravel\Socialite\Two\InvalidStateException;
 use Laravel\Socialite\Two\User as SocialiteUser;
 use Session;
 use TestCase;
-
 
 class LSLoginControllerTest extends TestCase
 {
@@ -92,5 +92,27 @@ class LSLoginControllerTest extends TestCase
         $this->be($id->user);
         $this->get('auth/lslogin/callback')->assertRedirectToRoute('settings-authentication');
         $this->assertAuthenticatedAs($id->user);
+    }
+
+    public function testInvalidStateExceptionDuringLogin()
+    {
+        config(['biigle.user_registration' => true]);
+        Socialite::shouldReceive('driver->user')->andThrow(InvalidStateException::class);
+
+        $this->get('auth/lslogin/callback')
+            ->assertInvalid(['lslogin-id'])
+            ->assertRedirectToRoute('login');
+    }
+
+    public function testInvalidStateExceptionDuringConnect()
+    {
+        config(['biigle.user_registration' => true]);
+        Socialite::shouldReceive('driver->user')->andThrow(InvalidStateException::class);
+
+        $user = User::factory()->create();
+        $this->be($user);
+        $this->get('auth/lslogin/callback')
+            ->assertInvalid(['lslogin-id'])
+            ->assertRedirectToRoute('settings-authentication');
     }
 }
