@@ -15,7 +15,7 @@ class LSLoginControllerTest extends TestCase
     public function testRedirect()
     {
         $this->get('auth/lslogin/redirect')
-            ->assertRedirectContains('https://proxy.aai.lifescience-ri.eu');
+            ->assertRedirectContains('https://login.aai.lifescience-ri.eu');
     }
 
     public function testCallbackNewUser()
