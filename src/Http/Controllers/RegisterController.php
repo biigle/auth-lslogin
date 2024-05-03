@@ -71,7 +71,9 @@ class RegisterController extends BaseController
                 ->withErrors(['lslogin-id' => 'The Life Science Login ID is already connected with an account.']);
         }
 
-        return parent::register($request);
+        // Do not use parent::register() because this may be disabled with
+        // config('biigle.sso_registration_only').
+        return $this->baseRegister($request);
     }
 
     /**
