@@ -4,10 +4,10 @@ namespace Biigle\Modules\AuthLSLogin\Http\Controllers;
 
 use Biigle\Http\Controllers\Controller;
 use Biigle\Modules\AuthLSLogin\LsloginId;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Laravel\Socialite\Facades\Socialite;
-use Laravel\Socialite\Two\InvalidStateException;
 
 class LSLoginController extends Controller
 {
@@ -31,12 +31,12 @@ class LSLoginController extends Controller
     {
         try {
             $user = Socialite::driver('lifesciencelogin')->user();
-        } catch (InvalidStateException $e) {
+        } catch (Exception $e) {
             $route = $request->user() ? 'settings-authentication' : 'login';
 
             return redirect()
-                    ->route($route)
-                    ->withErrors(['lslogin-id' => 'There was an unexpected error. Please try again.']);
+                ->route($route)
+                ->withErrors(['lslogin-id' => 'There was an unexpected error. Please try again.']);
         }
 
         $lslId = LsloginId::with('user')->find($user->id);
