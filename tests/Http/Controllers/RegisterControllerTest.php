@@ -68,10 +68,10 @@ class RegisterControllerTest extends TestCase
 
         $user = User::where('email', 'joe@example.com')->first();
         $this->assertNotNull($user);
-        $this->assertEquals('Joe', $user->firstname);
-        $this->assertEquals('User', $user->lastname);
-        $this->assertEquals('something', $user->affiliation);
-        $this->assertEquals(Role::editorId(), $user->role_id);
+        $this->assertSame('Joe', $user->firstname);
+        $this->assertSame('User', $user->lastname);
+        $this->assertSame('something', $user->affiliation);
+        $this->assertSame(Role::editorId(), $user->role_id);
 
         $this->assertTrue(LsloginId::where('user_id', $user->id)->where('id', 'mylsloginid')->exists());
     }
