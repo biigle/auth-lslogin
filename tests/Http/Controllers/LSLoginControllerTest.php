@@ -38,7 +38,25 @@ class LSLoginControllerTest extends TestCase
         Socialite::shouldReceive('driver->user')->andReturn($user);
 
         $this->get('auth/lslogin/callback')
-            ->assertInvalid(['lslogin-id'])
+            ->assertInvalid([
+                'lslogin-id' => 'The user does not exist and new registrations are disabled.',
+            ])
+            ->assertRedirectToRoute('login');
+    }
+
+    public function testCallbackNewUserRegistrationDisabledUserExists()
+    {
+        User::factory()->create(['email' => 'joe@example.com']);
+        config(['biigle.user_registration' => false]);
+        $user = new SocialiteUser;
+        $user->email = 'joe@example.com';
+        $user->setToken('mytoken');
+        Socialite::shouldReceive('driver->user')->andReturn($user);
+
+        $this->get('auth/lslogin/callback')
+            ->assertInvalid([
+                'lslogin-id' => 'The email has already been taken. You can connect your existing account to Life Science Login in the account authorization settings.',
+            ])
             ->assertRedirectToRoute('login');
     }
 
