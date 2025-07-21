@@ -2,6 +2,7 @@
 
 namespace Biigle\Modules\AuthLSLogin\Http\Controllers;
 
+use Biigle\User;
 use Biigle\Http\Controllers\Controller;
 use Biigle\Modules\AuthLSLogin\LsloginId;
 use Exception;
@@ -72,17 +73,23 @@ class LSLoginController extends Controller
             return redirect()->route('home');
         }
 
-        // Case: The user wants to log in (the registration form is disabled), their
-        // account does not exist yet and new registrations are disabled.
-        if (!config('biigle.user_registration')) {
-            return redirect()
-                ->route('login')
-                ->withErrors(['lslogin-id' => 'The user does not exist and new registrations are disabled.']);
+        // Case: A new user wants to register using LSL.
+        if (config('biigle.user_registration')) {
+            $request->session()->put('lslogin-token', $user->token);
+
+            return redirect()->route('lslogin-register-form');
         }
 
-        // Case: A new user wants to register using LSL.
-        $request->session()->put('lslogin-token', $user->token);
+        // Case: The account exists but must be connected first.
+        if (User::where('email', $user->email)->exists()) {
+            return redirect()
+                ->route('login')
+                ->withErrors(['lslogin-id' => 'The email has already been taken. You can connect your existing account to Life Science Login in the account authorization settings.']);
+        }
 
-        return redirect()->route('lslogin-register-form');
+        // Case: The account does not exist yet and new registrations are disabled.
+        return redirect()
+            ->route('login')
+            ->withErrors(['lslogin-id' => 'The user does not exist and new registrations are disabled.']);
     }
 }
