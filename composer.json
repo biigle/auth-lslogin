@@ -15,7 +15,7 @@
       }
     ],
     "require": {
-        "socialiteproviders/lifesciencelogin": "^6.0"
+        "socialiteproviders/lifesciencelogin": "^6.1"
     },
     "autoload": {
       "psr-4": {
