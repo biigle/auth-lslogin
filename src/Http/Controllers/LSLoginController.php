@@ -8,6 +8,7 @@ use Biigle\Modules\AuthLSLogin\LsloginId;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Laravel\Socialite\Facades\Socialite;
 
 class LSLoginController extends Controller
@@ -33,6 +34,10 @@ class LSLoginController extends Controller
         try {
             $user = Socialite::driver('lifesciencelogin')->user();
         } catch (Exception $e) {
+            Log::error('Unexpected error during Life Science Login authentication.', [
+                'exception' => $e,
+            ]);
+
             $route = $request->user() ? 'settings-authentication' : 'login';
 
             return redirect()

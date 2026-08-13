@@ -4,6 +4,7 @@ namespace Biigle\Tests\Modules\AuthLSLogin\Http\Controllers;
 
 use Biigle\Modules\AuthLSLogin\LsloginId;
 use Biigle\User;
+use Illuminate\Support\Facades\Log;
 use Laravel\Socialite\Facades\Socialite;
 use Laravel\Socialite\Two\InvalidStateException;
 use Laravel\Socialite\Two\User as SocialiteUser;
@@ -115,7 +116,13 @@ class LSLoginControllerTest extends TestCase
     public function testInvalidStateExceptionDuringLogin()
     {
         config(['biigle.user_registration' => true]);
-        Socialite::shouldReceive('driver->user')->andThrow(InvalidStateException::class);
+        $exception = new InvalidStateException;
+        Socialite::shouldReceive('driver->user')->andThrow($exception);
+        Log::shouldReceive('error')
+            ->once()
+            ->with('Unexpected error during Life Science Login authentication.', [
+                'exception' => $exception,
+            ]);
 
         $this->get('auth/lslogin/callback')
             ->assertInvalid(['lslogin-id'])
@@ -125,7 +132,13 @@ class LSLoginControllerTest extends TestCase
     public function testInvalidStateExceptionDuringConnect()
     {
         config(['biigle.user_registration' => true]);
-        Socialite::shouldReceive('driver->user')->andThrow(InvalidStateException::class);
+        $exception = new InvalidStateException;
+        Socialite::shouldReceive('driver->user')->andThrow($exception);
+        Log::shouldReceive('error')
+            ->once()
+            ->with('Unexpected error during Life Science Login authentication.', [
+                'exception' => $exception,
+            ]);
 
         $user = User::factory()->create();
         $this->be($user);
