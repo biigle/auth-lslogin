@@ -2,8 +2,8 @@
 
 namespace Biigle\Tests\Modules\AuthLSLogin\Http\Controllers;
 
+use Biigle\Enums\Role;
 use Biigle\Modules\AuthLSLogin\LsloginId;
-use Biigle\Role;
 use Biigle\User;
 use Exception;
 use Laravel\Socialite\Facades\Socialite;
