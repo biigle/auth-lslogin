@@ -146,4 +146,19 @@ class LSLoginControllerTest extends TestCase
             ->assertInvalid(['lslogin-id'])
             ->assertRedirectToRoute('settings-authentication');
     }
+
+    public function testCallbackWithError()
+    {
+        Socialite::shouldReceive('driver->user')->never();
+        Log::shouldReceive('warning')
+            ->once()
+            ->with('Life Science Login returned an error.', [
+                'error' => 'access_denied',
+                'description' => 'User denied consent',
+            ]);
+
+        $this->get('auth/lslogin/callback?error=access_denied&error_description=User+denied+consent')
+            ->assertInvalid(['lslogin-id'])
+            ->assertRedirectToRoute('login');
+    }
 }
