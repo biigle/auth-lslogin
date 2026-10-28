@@ -31,14 +31,27 @@ class LSLoginController extends Controller
      */
     public function callback(Request $request)
     {
+        $route = $request->user() ? 'settings-authentication' : 'login';
+
+        // Life Science Login redirects back with an OAuth error instead of a code
+        // if the user denied consent or the login failed on their side.
+        if ($request->has('error')) {
+            Log::warning('Life Science Login returned an error.', [
+                'error' => $request->input('error'),
+                'description' => $request->input('error_description'),
+            ]);
+
+            return redirect()
+                ->route($route)
+                ->withErrors(['lslogin-id' => 'There was an unexpected error. Please try again.']);
+        }
+
         try {
             $user = Socialite::driver('lifesciencelogin')->user();
         } catch (Exception $e) {
             Log::error('Unexpected error during Life Science Login authentication.', [
                 'exception' => $e,
             ]);
-
-            $route = $request->user() ? 'settings-authentication' : 'login';
 
             return redirect()
                 ->route($route)
