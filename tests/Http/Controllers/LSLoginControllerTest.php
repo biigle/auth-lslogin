@@ -4,6 +4,7 @@ namespace Biigle\Tests\Modules\AuthLSLogin\Http\Controllers;
 
 use Biigle\Modules\AuthLSLogin\LsloginId;
 use Biigle\User;
+use Exception;
 use Illuminate\Support\Facades\Log;
 use Laravel\Socialite\Facades\Socialite;
 use Laravel\Socialite\Two\InvalidStateException;
@@ -116,7 +117,62 @@ class LSLoginControllerTest extends TestCase
     public function testInvalidStateExceptionDuringLogin()
     {
         config(['biigle.user_registration' => true]);
-        $exception = new InvalidStateException;
+        Socialite::shouldReceive('driver->user')->andThrow(new InvalidStateException);
+        Log::shouldReceive('error')
+            ->once()
+            ->withArgs(function ($message, $context) {
+                return $message === 'Invalid state during Life Science Login authentication.'
+                    && $context['session_state_present'] === false
+                    && $context['request_state_present'] === false
+                    && $context['authenticated_user'] === null;
+            });
+
+        $this->get('auth/lslogin/callback')
+            ->assertInvalid(['lslogin-id'])
+            ->assertRedirectToRoute('login');
+    }
+
+    public function testInvalidStateExceptionStateMismatch()
+    {
+        Socialite::shouldReceive('driver->user')->andThrow(new InvalidStateException);
+        Log::shouldReceive('error')
+            ->once()
+            ->withArgs(function ($message, $context) {
+                return $message === 'Invalid state during Life Science Login authentication.'
+                    && $context['session_state_present'] === true
+                    && $context['request_state_present'] === true
+                    && $context['code_present'] === true
+                    && $context['referer_host'] === 'login.aai.lifescience-ri.eu';
+            });
+
+        $this->withSession(['state' => 'session-state'])
+            ->withHeader('referer', 'https://login.aai.lifescience-ri.eu/oidc/authorize?code=secret&state=request-state')
+            ->get('auth/lslogin/callback?state=request-state&code=secret')
+            ->assertInvalid(['lslogin-id'])
+            ->assertRedirectToRoute('login');
+    }
+
+    public function testInvalidStateExceptionDuringConnect()
+    {
+        config(['biigle.user_registration' => true]);
+        $user = User::factory()->create();
+        Socialite::shouldReceive('driver->user')->andThrow(new InvalidStateException);
+        Log::shouldReceive('error')
+            ->once()
+            ->withArgs(function ($message, $context) use ($user) {
+                return $message === 'Invalid state during Life Science Login authentication.'
+                    && $context['authenticated_user'] === $user->id;
+            });
+
+        $this->be($user);
+        $this->get('auth/lslogin/callback')
+            ->assertInvalid(['lslogin-id'])
+            ->assertRedirectToRoute('settings-authentication');
+    }
+
+    public function testUnexpectedExceptionDuringCallback()
+    {
+        $exception = new Exception;
         Socialite::shouldReceive('driver->user')->andThrow($exception);
         Log::shouldReceive('error')
             ->once()
@@ -127,24 +183,6 @@ class LSLoginControllerTest extends TestCase
         $this->get('auth/lslogin/callback')
             ->assertInvalid(['lslogin-id'])
             ->assertRedirectToRoute('login');
-    }
-
-    public function testInvalidStateExceptionDuringConnect()
-    {
-        config(['biigle.user_registration' => true]);
-        $exception = new InvalidStateException;
-        Socialite::shouldReceive('driver->user')->andThrow($exception);
-        Log::shouldReceive('error')
-            ->once()
-            ->with('Unexpected error during Life Science Login authentication.', [
-                'exception' => $exception,
-            ]);
-
-        $user = User::factory()->create();
-        $this->be($user);
-        $this->get('auth/lslogin/callback')
-            ->assertInvalid(['lslogin-id'])
-            ->assertRedirectToRoute('settings-authentication');
     }
 
     public function testCallbackWithError()

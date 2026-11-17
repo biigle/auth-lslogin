@@ -56,15 +56,16 @@ class LSLoginController extends Controller
             $user = Socialite::driver('lifesciencelogin')->user();
         } catch (InvalidStateException $e) {
             Log::error('Invalid state during Life Science Login authentication.', [
+                'exception' => $e,
                 'session_state_present' => !empty($sessionState),
                 'request_state_present' => !empty($requestState),
-                'states_match' => !empty($sessionState) && is_string($requestState) && hash_equals($sessionState, $requestState),
                 'session_cookie_present' => $request->hasCookie(config('session.cookie')),
                 'code_present' => $request->has('code'),
                 'authenticated_user' => $request->user()?->id,
                 'request_host' => $request->getHost(),
                 'app_url' => config('app.url'),
-                'referer' => $request->headers->get('referer'),
+                // Only the host because the full URL may contain the OAuth code and state.
+                'referer_host' => parse_url($request->headers->get('referer') ?? '', PHP_URL_HOST),
                 'user_agent' => $request->userAgent(),
             ]);
 
