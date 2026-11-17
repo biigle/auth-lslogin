@@ -6,6 +6,7 @@ use Biigle\Modules\AuthLSLogin\LsloginId;
 use Biigle\User;
 use Exception;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Laravel\Socialite\Facades\Socialite;
 use Laravel\Socialite\Two\InvalidStateException;
 use Laravel\Socialite\Two\User as SocialiteUser;
@@ -127,7 +128,18 @@ class LSLoginControllerTest extends TestCase
                     && $context['authenticated_user'] === null;
             });
 
-        $this->get('auth/lslogin/callback')
+        $this->withSessionCookie()
+            ->get('auth/lslogin/callback')
+            ->assertInvalid(['lslogin-id'])
+            ->assertRedirectToRoute('login');
+    }
+
+    public function testInvalidStateExceptionWithoutSessionCookie()
+    {
+        Socialite::shouldReceive('driver->user')->andThrow(new InvalidStateException);
+        Log::shouldReceive('error')->never();
+
+        $this->get('auth/lslogin/callback?state=request-state&code=secret')
             ->assertInvalid(['lslogin-id'])
             ->assertRedirectToRoute('login');
     }
@@ -145,7 +157,8 @@ class LSLoginControllerTest extends TestCase
                     && $context['referer_host'] === 'login.aai.lifescience-ri.eu';
             });
 
-        $this->withSession(['state' => 'session-state'])
+        $this->withSessionCookie()
+            ->withSession(['state' => 'session-state'])
             ->withHeader('referer', 'https://login.aai.lifescience-ri.eu/oidc/authorize?code=secret&state=request-state')
             ->get('auth/lslogin/callback?state=request-state&code=secret')
             ->assertInvalid(['lslogin-id'])
@@ -165,7 +178,8 @@ class LSLoginControllerTest extends TestCase
             });
 
         $this->be($user);
-        $this->get('auth/lslogin/callback')
+        $this->withSessionCookie()
+            ->get('auth/lslogin/callback')
             ->assertInvalid(['lslogin-id'])
             ->assertRedirectToRoute('settings-authentication');
     }
@@ -198,5 +212,12 @@ class LSLoginControllerTest extends TestCase
         $this->get('auth/lslogin/callback?error=access_denied&error_description=User+denied+consent')
             ->assertInvalid(['lslogin-id'])
             ->assertRedirectToRoute('login');
+    }
+
+    protected function withSessionCookie()
+    {
+        // The test client does not send a session cookie by default. A valid session ID
+        // format is used so StartSession does not discard it.
+        return $this->withCookie(config('session.cookie'), Str::random(40));
     }
 }
