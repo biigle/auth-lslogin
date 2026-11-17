@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Laravel\Socialite\Facades\Socialite;
+use Laravel\Socialite\Two\InvalidStateException;
 
 class LSLoginController extends Controller
 {
@@ -46,8 +47,31 @@ class LSLoginController extends Controller
                 ->withErrors(['lslogin-id' => 'There was an unexpected error. Please try again.']);
         }
 
+        // Socialite pulls the state from the session during user(), so it has to be
+        // captured beforehand to be able to diagnose an InvalidStateException.
+        $sessionState = $request->session()->get('state');
+        $requestState = $request->input('state');
+
         try {
             $user = Socialite::driver('lifesciencelogin')->user();
+        } catch (InvalidStateException $e) {
+            Log::error('Invalid state during Life Science Login authentication.', [
+                'exception' => $e,
+                'session_state_present' => !empty($sessionState),
+                'request_state_present' => !empty($requestState),
+                'session_cookie_present' => $request->hasCookie(config('session.cookie')),
+                'code_present' => $request->has('code'),
+                'authenticated_user' => $request->user()?->id,
+                'request_host' => $request->getHost(),
+                'app_url' => config('app.url'),
+                // Only the host because the full URL may contain the OAuth code and state.
+                'referer_host' => parse_url($request->headers->get('referer') ?? '', PHP_URL_HOST),
+                'user_agent' => $request->userAgent(),
+            ]);
+
+            return redirect()
+                ->route($route)
+                ->withErrors(['lslogin-id' => 'Your login session expired or is invalid. Please try again.']);
         } catch (Exception $e) {
             Log::error('Unexpected error during Life Science Login authentication.', [
                 'exception' => $e,
