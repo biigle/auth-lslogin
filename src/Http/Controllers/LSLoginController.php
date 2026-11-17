@@ -55,11 +55,18 @@ class LSLoginController extends Controller
         try {
             $user = Socialite::driver('lifesciencelogin')->user();
         } catch (InvalidStateException $e) {
+            // Requests without a session cookie can never complete the OAuth flow.
+            // These are usually bots or link preview fetchers and not real users.
+            if (!$request->hasCookie(config('session.cookie'))) {
+                return redirect()
+                    ->route($route)
+                    ->withErrors(['lslogin-id' => 'Your login session expired or is invalid. Please try again.']);
+            }
+
             Log::error('Invalid state during Life Science Login authentication.', [
                 'exception' => $e,
                 'session_state_present' => !empty($sessionState),
                 'request_state_present' => !empty($requestState),
-                'session_cookie_present' => $request->hasCookie(config('session.cookie')),
                 'code_present' => $request->has('code'),
                 'authenticated_user' => $request->user()?->id,
                 'request_host' => $request->getHost(),
